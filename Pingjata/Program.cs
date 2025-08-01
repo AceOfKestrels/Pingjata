@@ -10,6 +10,7 @@ services.AddControllers();
 services.AddSingleton(new DiscordSocketClient());
 services.AddHostedService<DiscordBot>();
 services.AddHostedService<PingHandler>();
+services.AddHostedService<DmHandler>();
 
 var app = builder.Build();
 
