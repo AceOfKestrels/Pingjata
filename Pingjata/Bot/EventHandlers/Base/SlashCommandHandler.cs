@@ -62,7 +62,7 @@ public abstract class SlashCommandHandler(DiscordSocketClient client, ILogger<Sl
         private Description(string value)
         {
             StringBuilder builder = new();
-            int max = Math.Min(value.Length - 1, DescriptionMaxLength);
+            int max = Math.Min(value.Length, DescriptionMaxLength);
             for (int i = 0; i < max; i++)
                 builder.Append(value[i]);
 

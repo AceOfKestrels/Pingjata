@@ -16,6 +16,7 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
     private const string HelpCommandName = "help";
 
     private const string SetCommandNumberOptionName = "number";
+    private const string SetCommandMinMaxOptionName = "min-max";
     private const string SetCommandMinOptionName = "min";
     private const string SetCommandMaxOptionName = "max";
 
@@ -35,8 +36,19 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
                 .WithDescription((Description)"The threshold")
                 .WithType(ApplicationCommandOptionType.Integer)
                 .WithMinValue(1)
-                .WithMaxValue(1000)
-                .WithRequired(true)))
+                .WithMaxValue(1000))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName(SetCommandMinOptionName)
+                .WithDescription((Description)"Min")
+                .WithType(ApplicationCommandOptionType.Integer)
+                .WithMinValue(1)
+                .WithMaxValue(1000))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName(SetCommandMaxOptionName)
+                .WithDescription((Description)"Max")
+                .WithType(ApplicationCommandOptionType.Integer)
+                .WithMinValue(1)
+                .WithMaxValue(1000)))
         .AddOption(new SlashCommandOptionBuilder()
             .WithType(ApplicationCommandOptionType.SubCommand)
             .WithName(StartCommandName)
