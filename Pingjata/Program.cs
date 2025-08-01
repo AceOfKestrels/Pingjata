@@ -1,7 +1,15 @@
+using Discord.WebSocket;
+using Pingjata.Bot;
+using Pingjata.Bot.EventHandlers.MessageHandlers;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var services = builder.Services;
 services.AddControllers();
+
+services.AddSingleton(new DiscordSocketClient());
+services.AddHostedService<DiscordBot>();
+services.AddHostedService<PingHandler>();
 
 var app = builder.Build();
 
