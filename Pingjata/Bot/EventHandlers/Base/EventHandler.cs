@@ -6,18 +6,7 @@ public abstract class EventHandler(DiscordSocketClient client) : IHostedService
 {
     protected DiscordSocketClient Client => client;
 
-    protected abstract void Init();
-    protected abstract void Destroy();
-    
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        Init();
-        return Task.CompletedTask;
-    }
+    public abstract Task StartAsync(CancellationToken cancellationToken);
 
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        Destroy();
-        return Task.CompletedTask;
-    }
+    public abstract Task StopAsync(CancellationToken cancellationToken);
 }

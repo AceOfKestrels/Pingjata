@@ -4,14 +4,16 @@ namespace Pingjata.Bot.EventHandlers.Base;
 
 public abstract class MessageEventHandler(DiscordSocketClient client, ILogger<MessageEventHandler> logger) : EventHandler(client)
 {
-    protected override void Init()
+    public override Task StartAsync(CancellationToken cancellationToken)
     {
         Client.MessageReceived += HandleInternalAsync;
+        return Task.CompletedTask;
     }
 
-    protected override void Destroy()
+    public override Task StopAsync(CancellationToken cancellationToken)
     {
         Client.MessageReceived -= HandleInternalAsync;
+        return Task.CompletedTask;
     }
 
     private Task HandleInternalAsync(SocketMessage message)
