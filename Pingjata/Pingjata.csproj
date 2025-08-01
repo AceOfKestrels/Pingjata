@@ -15,6 +15,11 @@
 
     <ItemGroup>
       <PackageReference Include="Discord.Net" Version="3.18.0" />
+      <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Properties\launchSettings.json" />
     </ItemGroup>
 
 </Project>

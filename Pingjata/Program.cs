@@ -2,24 +2,36 @@ using Discord.WebSocket;
 using Pingjata.Bot;
 using Pingjata.Bot.EventHandlers.CommandHandlers;
 using Pingjata.Bot.EventHandlers.MessageHandlers;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateLogger();
 
-var services = builder.Services;
-services.AddControllers();
+try
+{
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-services.AddSingleton(new DiscordSocketClient());
-services.AddHostedService<DiscordBot>();
-services.AddHostedService<PingHandler>();
-services.AddHostedService<DmHandler>();
-services.AddHostedService<PingjataCommandHandler>();
+    IServiceCollection services = builder.Services;
 
-var app = builder.Build();
+    services.AddSerilog();
 
-app.UseHttpsRedirection();
+    services.AddSingleton(new DiscordSocketClient());
+    services.AddHostedService<DiscordBot>();
 
-app.UseAuthorization();
+    services.AddHostedService<PingHandler>();
+    services.AddHostedService<DmHandler>();
+    services.AddHostedService<PingjataCommandHandler>();
 
-app.MapControllers();
+    WebApplication app = builder.Build();
 
-app.Run();
+    app.Run();
+}
+catch (Exception e)
+{
+    Log.Fatal(e, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
