@@ -4,6 +4,7 @@ using Pingjata.Bot;
 using Pingjata.Bot.EventHandlers.CommandHandlers;
 using Pingjata.Bot.EventHandlers.MessageHandlers;
 using Pingjata.Persistence;
+using Pingjata.Service;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -23,6 +24,8 @@ try
     {
         options.UseNpgsql(connectionString);
     });
+
+    services.AddSingleton<CounterService>();
 
     services.AddSingleton(new DiscordSocketClient());
     services.AddHostedService<DiscordBot>();

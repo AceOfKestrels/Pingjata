@@ -11,6 +11,7 @@ public class ChannelEntity
     public string ThresholdRange { get; set; } = string.Empty;
     public string? WinnerId { get; set; } = string.Empty;
     public DateTime? RoundEndedAt { get; set; }
+    public bool IsPaused { get; set; }
 
-    public byte[] RowVersion { get; set; } = [];
+    public bool IsActive => !IsPaused && string.IsNullOrWhiteSpace(WinnerId);
 }

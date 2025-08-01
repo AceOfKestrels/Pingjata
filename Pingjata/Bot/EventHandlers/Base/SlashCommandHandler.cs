@@ -25,7 +25,7 @@ public abstract class SlashCommandHandler(DiscordSocketClient client, ILogger<Sl
     private async Task RegisterCommand()
     {
         try
-        { 
+        {
             await Client.CreateGlobalApplicationCommandAsync(Command.Build());
         }
         catch (Exception e)
@@ -49,7 +49,8 @@ public abstract class SlashCommandHandler(DiscordSocketClient client, ILogger<Sl
             }
             catch (Exception e)
             {
-                logger.LogError("Error while executing command: {Error}", e);                
+                logger.LogError("Error while executing command: {Error}", e);
+                await command.RespondAsync("An error occurred while executing this command.", ephemeral: true);
             }
         });
         return Task.CompletedTask;

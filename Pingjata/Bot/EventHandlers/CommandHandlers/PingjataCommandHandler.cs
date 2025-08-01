@@ -1,10 +1,12 @@
 using Discord;
 using Discord.WebSocket;
 using Pingjata.Bot.EventHandlers.Base;
+using Pingjata.Extensions;
+using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
 
-public class PingjataCommandHandler(DiscordSocketClient client, ILogger<PingjataCommandHandler> logger)
+public class PingjataCommandHandler(DiscordSocketClient client, ILogger<PingjataCommandHandler> logger, CounterService counterService)
     : SlashCommandHandler(client, logger)
 {
     private const string SetCommandName = "set";
@@ -16,9 +18,9 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
     private const string HelpCommandName = "help";
 
     private const string SetCommandNumberOptionName = "number";
-    private const string SetCommandMinMaxOptionName = "min-max";
     private const string SetCommandMinOptionName = "min";
     private const string SetCommandMaxOptionName = "max";
+    private const string StartCommandMessageOptionName = "message";
 
     #region CommandBuilder
 
@@ -54,7 +56,7 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
             .WithName(StartCommandName)
             .WithDescription((Description)"Set this channel as one to be counted in, and set a greeting message.")
             .AddOption(new SlashCommandOptionBuilder()
-                .WithName("message")
+                .WithName(StartCommandMessageOptionName)
                 .WithDescription((Description)"The greeting message to send")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithMinLength(1)
@@ -136,7 +138,23 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
 
     private async Task OnStartCommand(SocketSlashCommand command, List<SocketSlashCommandDataOption>? args)
     {
-        await command.RespondAsync("Start command executed", ephemeral: true);
+        if (command.Channel.IsThread())
+        {
+            await RespondWithError(command, "Channel cannot be a thread");
+            return;
+        }
+
+        string? arg = args?.FirstOrDefault(a => a.Name == StartCommandMessageOptionName)?.Value as string;
+
+        if (arg.IsEmpty())
+        {
+            await RespondWithError(command, $"Must provide a value for {StartCommandMessageOptionName}");
+            return;
+        }
+
+        await counterService.StartRound(command.Channel.Id.ToString(), arg!);
+
+        await command.RespondAsync("Greeting message set.", ephemeral: true);
     }
 
     private async Task OnPauseCommand(SocketSlashCommand command)
@@ -166,7 +184,7 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
 
     private Task RespondWithError(SocketSlashCommand command, string error)
     {
-        logger.LogError("Received invalid command: {Error}", error);
+        logger.LogWarning("Received invalid command: {Error}", error);
 
         return command.RespondAsync(error, ephemeral: true);
     }

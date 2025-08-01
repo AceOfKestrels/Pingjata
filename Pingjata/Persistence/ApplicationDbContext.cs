@@ -26,7 +26,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Property(b => b.ThresholdRange).HasColumnName("threshold_range").HasColumnType("text");
         builder.Property(b => b.WinnerId).HasColumnName("winner_id").HasColumnType("text");
         builder.Property(b => b.RoundEndedAt).HasColumnName("round_ended_at");
-
-        builder.Property(b => b.RowVersion).HasColumnName("row_version").IsRowVersion();
+        builder.Property(b => b.IsPaused).HasColumnName("is_paused");
     }
 }
