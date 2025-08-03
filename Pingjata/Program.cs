@@ -44,7 +44,7 @@ try
 
     app.Run();
 }
-catch (Exception e)
+catch (Exception e) when (e is not HostAbortedException)
 {
     Log.Fatal(e, "Application terminated unexpectedly");
 }
@@ -58,6 +58,7 @@ return;
 string GetDbConnectionString()
 {
     string? host = Environment.GetEnvironmentVariable("DB_HOST");
+    string port = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
     string? user = Environment.GetEnvironmentVariable("DB_USER");
     string? password = Environment.GetEnvironmentVariable("DB_PASSWORD");
     string? database = Environment.GetEnvironmentVariable("DB_DATABASE");
@@ -67,7 +68,7 @@ string GetDbConnectionString()
         throw new ArgumentException(
             "The environment variables DB_HOST, DB_USER, DB_PASSWORD and DB_DATABASE must be set");
 
-    string connectionStr = $"Host={host};Username={user};Password={password};Database={database}";
+    string connectionStr = $"Host={host}:{port};Username={user};Password={password};Database={database}";
 
     return connectionStr;
 }

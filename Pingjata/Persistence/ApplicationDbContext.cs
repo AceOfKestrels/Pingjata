@@ -19,12 +19,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         builder.HasKey(b => b.ChannelId);
 
-        builder.Property(b => b.ChannelId).HasColumnName("id").HasColumnType("text").IsRequired();
-        builder.Property(b => b.GreetingMessage).HasColumnName("greeting").HasColumnType("text");
+        builder.Property(b => b.ChannelId).HasColumnName("id").IsRequired();
+        builder.Property(b => b.GreetingMessage).HasColumnName("greeting");
         builder.Property(b => b.CurrentCounter).HasColumnName("current_counter");
         builder.Property(b => b.Threshold).HasColumnName("current_threshold");
-        builder.Property(b => b.ThresholdRange).HasColumnName("threshold_range").HasColumnType("text");
-        builder.Property(b => b.WinnerId).HasColumnName("winner_id").HasColumnType("text");
+        builder.Property(b => b.ThresholdRange).HasColumnName("threshold_range");
+        builder.Property(b => b.WinnerId).HasColumnName("winner_id");
         builder.Property(b => b.RoundEndedAt).HasColumnName("round_ended_at");
         builder.Property(b => b.IsPaused).HasColumnName("is_paused");
     }

@@ -12,8 +12,8 @@ using Pingjata.Persistence;
 namespace Pingjata.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250801231837_RemoveRowVersion")]
-    partial class RemoveRowVersion
+    [Migration("20250803165853_CreateInitial")]
+    partial class CreateInitial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

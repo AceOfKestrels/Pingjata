@@ -22,7 +22,7 @@ namespace Pingjata.Persistence.Migrations
                     threshold_range = table.Column<string>(type: "text", nullable: false),
                     winner_id = table.Column<string>(type: "text", nullable: true),
                     round_ended_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    row_version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false)
+                    is_paused = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
