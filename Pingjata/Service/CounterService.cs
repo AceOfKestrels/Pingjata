@@ -33,8 +33,9 @@ public class CounterService(ILogger<CounterService> logger, IDbContextFactory<Ap
         channel.CurrentCounter++;
 
         dbContext.Channels.Update(channel);
+        await dbContext.SaveChangesAsync();
 
-        return channel.CurrentCounter < channel.Threshold ? 0 : channel.Threshold;
+        return channel.CurrentCounter < channel.Threshold ? channel.CurrentCounter : 0;
     }
 
     public async Task<bool> StartRound(string channelId, string message)
@@ -62,5 +63,28 @@ public class CounterService(ILogger<CounterService> logger, IDbContextFactory<Ap
         await dbContext.SaveChangesAsync();
 
         return !channel.IsActive;
+    }
+
+    public async Task<int> SetThreshold(string channelId, int min, int? max = null)
+    {
+        ChannelEntity? channel = await GetChannel(channelId);
+
+        if (channel is null)
+            return -1;
+
+        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
+
+        int value = max is null ? min : Random.Shared.Next(min, max.Value + 1);
+        channel.Threshold = value;
+        channel.ThresholdRange = max is null ? $"{min}" : $"{min}-{max.Value}";
+        channel.CurrentCounter = 0;
+        channel.IsPaused = false;
+        channel.WinnerId = null;
+        channel.RoundEndedAt = null;
+
+        dbContext.Channels.Update(channel);
+        await dbContext.SaveChangesAsync();
+
+        return value;
     }
 }

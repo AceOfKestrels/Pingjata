@@ -121,7 +121,15 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
 
         if (isThreshold)
         {
-            await command.RespondAsync($"Set command executed with threshold: {firstArg.Value}", ephemeral: true);
+            if (firstArg.Value is not long or int)
+            {
+                await RespondWithError(command, $"Invalid argument: {SetCommandNumberOptionName} must be of type int");
+                return;
+            }
+
+            int result = await counterService.SetThreshold(command.Channel.Id.ToString(), (int)(long)firstArg.Value);
+
+            await command.RespondAsync($"Started new round with threshold: {result}", ephemeral: true);
 
             return;
         }
@@ -154,7 +162,7 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
 
         await counterService.StartRound(command.Channel.Id.ToString(), arg!);
 
-        await command.RespondAsync("Greeting message set.", ephemeral: true);
+        await command.RespondAsync("Greeting message set. Use \"pingjata set <value>\" to set the threshold and start counting", ephemeral: true);
     }
 
     private async Task OnPauseCommand(SocketSlashCommand command)
