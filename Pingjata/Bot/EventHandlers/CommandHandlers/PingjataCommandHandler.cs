@@ -6,7 +6,10 @@ using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
 
-public class PingjataCommandHandler(DiscordSocketClient client, ILogger<PingjataCommandHandler> logger, CounterService counterService)
+public class PingjataCommandHandler(
+    DiscordSocketClient client,
+    ILogger<PingjataCommandHandler> logger,
+    CounterService counterService)
     : SlashCommandHandler(client, logger)
 {
     private const string SetCommandName = "set";
@@ -17,9 +20,7 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
     private const string ResetCommandName = "reset";
     private const string HelpCommandName = "help";
 
-    private const string SetCommandNumberOptionName = "number";
-    private const string SetCommandMinOptionName = "min";
-    private const string SetCommandMaxOptionName = "max";
+    private const string SetCommandNumberOptionName = "value";
     private const string StartCommandMessageOptionName = "message";
 
     #region CommandBuilder
@@ -35,22 +36,11 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
                 "Set the threshold for the current channel, will end current round without a winner if used during a round.")
             .AddOption(new SlashCommandOptionBuilder()
                 .WithName(SetCommandNumberOptionName)
-                .WithDescription((Description)"The threshold")
-                .WithType(ApplicationCommandOptionType.Integer)
-                .WithMinValue(1)
-                .WithMaxValue(1000))
-            .AddOption(new SlashCommandOptionBuilder()
-                .WithName(SetCommandMinOptionName)
-                .WithDescription((Description)"Min")
-                .WithType(ApplicationCommandOptionType.Integer)
-                .WithMinValue(1)
-                .WithMaxValue(1000))
-            .AddOption(new SlashCommandOptionBuilder()
-                .WithName(SetCommandMaxOptionName)
-                .WithDescription((Description)"Max")
-                .WithType(ApplicationCommandOptionType.Integer)
-                .WithMinValue(1)
-                .WithMaxValue(1000)))
+                .WithDescription((Description)"The threshold value or min-max")
+                .WithType(ApplicationCommandOptionType.String)
+                .WithRequired(true)
+                .WithMinLength(1)
+                .WithMaxLength(100)))
         .AddOption(new SlashCommandOptionBuilder()
             .WithType(ApplicationCommandOptionType.SubCommand)
             .WithName(StartCommandName)
@@ -116,32 +106,37 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
             return;
         }
 
-        SocketSlashCommandDataOption firstArg = args[0];
-        bool isThreshold = firstArg.Name == SetCommandNumberOptionName;
+        SocketSlashCommandDataOption arg = args[0];
 
-        if (isThreshold)
-        {
-            if (firstArg.Value is not long or int)
-            {
-                await RespondWithError(command, $"Invalid argument: {SetCommandNumberOptionName} must be of type int");
-                return;
-            }
-
-            int result = await counterService.SetThreshold(command.Channel.Id.ToString(), (int)(long)firstArg.Value);
-
-            await command.RespondAsync($"Started new round with threshold: {result}", ephemeral: true);
-
-            return;
-        }
-
-        if (firstArg.Name != SetCommandMinOptionName && firstArg.Name != SetCommandMaxOptionName)
+        if (arg.Name != SetCommandNumberOptionName || arg.Value is not string argStr)
         {
             await RespondWithError(command, "Unknown argument at index 0");
 
             return;
         }
 
-        // TODO: check second arg and min/max
+        bool isThreshold = int.TryParse(argStr, out int value);
+        int result;
+
+        if (isThreshold)
+        {
+            result = await counterService.SetThreshold(command.Channel.Id.ToString(), value);
+
+            await command.RespondAsync($"Started new round with threshold: {result}", ephemeral: true);
+
+            return;
+        }
+
+        string[] splitArg = argStr.Split('-');
+        if (splitArg.Length != 2 || !int.TryParse(splitArg[0], out int min) || !int.TryParse(splitArg[1], out int max))
+        {
+            await RespondWithError(command, "Could not parse threshold or range");
+
+            return;
+        }
+
+        result = await counterService.SetThreshold(command.Channel.Id.ToString(), min, max);
+        await command.RespondAsync($"Started new round with threshold: {result}", ephemeral: true);
     }
 
     private async Task OnStartCommand(SocketSlashCommand command, List<SocketSlashCommandDataOption>? args)
@@ -149,6 +144,7 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
         if (command.Channel.IsThread())
         {
             await RespondWithError(command, "Channel cannot be a thread");
+
             return;
         }
 
@@ -157,12 +153,15 @@ public class PingjataCommandHandler(DiscordSocketClient client, ILogger<Pingjata
         if (arg.IsEmpty())
         {
             await RespondWithError(command, $"Must provide a value for {StartCommandMessageOptionName}");
+
             return;
         }
 
         await counterService.StartRound(command.Channel.Id.ToString(), arg!);
 
-        await command.RespondAsync("Greeting message set. Use \"pingjata set <value>\" to set the threshold and start counting", ephemeral: true);
+        await command.RespondAsync(
+            "Greeting message set. Use \"pingjata set <value>\" to set the threshold and start counting",
+            ephemeral: true);
     }
 
     private async Task OnPauseCommand(SocketSlashCommand command)
