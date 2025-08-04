@@ -60,10 +60,24 @@ public class CounterService(
         entity.RoundEndedAt = DateTime.UtcNow;
         entity.WinnerId = userId.ToString();
 
+        SocketUser? user = client.GetUser(userId);
+
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
 
         dbContext.Channels.Update(entity);
         await dbContext.SaveChangesAsync();
+
+        if (user is not null)
+        {
+            await channel.SendMessageAsync($"@here\nRound has ended!\nThe winner is {user.Mention}");
+
+            for (int i = 0; i < entity.Threshold; i++)
+            {
+                await user.SendMessageAsync(user.Mention);
+            }
+
+            await user.SendMessageAsync("New threshold please");
+        }
     }
 
     public async Task<int> StartRound(ISocketMessageChannel channel, int min, int? max = null, string? message = null)
