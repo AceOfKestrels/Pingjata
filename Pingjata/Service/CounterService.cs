@@ -1,89 +1,96 @@
+using Discord;
+using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using Pingjata.Extensions;
 using Pingjata.Persistence;
 using Pingjata.Persistence.Models;
 
 namespace Pingjata.Service;
 
-public class CounterService(ILogger<CounterService> logger, IDbContextFactory<ApplicationDbContext> dbContextFactory)
+public class CounterService(
+    ILogger<CounterService> logger,
+    IDbContextFactory<ApplicationDbContext> dbContextFactory,
+    DiscordSocketClient client)
 {
-    public async Task<ChannelEntity?> GetChannel(string channelId)
+    public async Task<ChannelEntity?> GetChannel(ulong channelId)
     {
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
 
-        ChannelEntity? channel = await dbContext.Channels.FindAsync(channelId);
+        ChannelEntity? channel = await dbContext.Channels.FindAsync(channelId.ToString());
 
         return channel;
     }
 
     /// <summary>
-    /// Increases the counter for a given channel, if a round is currently active
+    /// Increases the counter for a given channel if a round is currently active
     /// </summary>
     /// <returns>
     /// -1 if there is currently no round active in this channel, 0 if the counter was increased,
     /// or the channel's threshold if it is reached
     /// </returns>
-    public async Task<int> IncreaseCounter(string channelId)
+    public async Task IncreaseCounter(ISocketMessageChannel channel, ulong userId)
     {
-        ChannelEntity? channel = await GetChannel(channelId);
+        ChannelEntity? entity = await GetChannel(channel.Id);
 
-        if (channel is null || !channel.IsActive)
-            return -1;
+        if (entity is null || !entity.IsActive)
+            return;
 
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
-        channel.CurrentCounter++;
-
-        dbContext.Channels.Update(channel);
-        await dbContext.SaveChangesAsync();
-
-        return channel.CurrentCounter < channel.Threshold ? channel.CurrentCounter : 0;
-    }
-
-    public async Task<bool> StartRound(string channelId, string message)
-    {
-        ChannelEntity? channel = await GetChannel(channelId);
-
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
-
-        if (channel is null)
+        if (entity.CurrentCounter + 1 >= entity.Threshold)
         {
-            channel = new()
-            {
-                ChannelId = channelId,
-                GreetingMessage = message,
-                IsPaused = true
-            };
+            await FinishRound(channel, userId);
 
-            dbContext.Channels.Add(channel);
-            await dbContext.SaveChangesAsync();
-            return false;
+            return;
         }
 
-        channel.GreetingMessage = message;
-        dbContext.Channels.Update(channel);
-        await dbContext.SaveChangesAsync();
+        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
+        entity.CurrentCounter++;
 
-        return !channel.IsActive;
+        dbContext.Channels.Update(entity);
+        await dbContext.SaveChangesAsync();
     }
 
-    public async Task<int> SetThreshold(string channelId, int min, int? max = null)
+    public async Task FinishRound(ISocketMessageChannel channel, ulong userId)
     {
-        ChannelEntity? channel = await GetChannel(channelId);
+        ChannelEntity? entity = await GetChannel(channel.Id);
 
-        if (channel is null)
-            return -1;
+        if (entity is null || !entity.IsActive)
+            return;
+
+        entity.CurrentCounter = 0;
+        entity.RoundEndedAt = DateTime.UtcNow;
+        entity.WinnerId = userId.ToString();
+
+        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
+
+        dbContext.Channels.Update(entity);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<int> StartRound(ISocketMessageChannel channel, int min, int? max = null, string? message = null)
+    {
+        ChannelEntity? entity = await GetChannel(channel.Id);
+
+        entity ??= new() { ChannelId = channel.Id.ToString() };
 
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
 
         int value = max is null ? min : Random.Shared.Next(min, max.Value + 1);
-        channel.Threshold = value;
-        channel.ThresholdRange = max is null ? $"{min}" : $"{min}-{max.Value}";
-        channel.CurrentCounter = 0;
-        channel.IsPaused = false;
-        channel.WinnerId = null;
-        channel.RoundEndedAt = null;
+        entity.Threshold = value;
+        entity.ThresholdRange = max is null ? $"{min}" : $"{min}-{max.Value}";
+        entity.CurrentCounter = 0;
+        entity.IsPaused = false;
+        entity.WinnerId = null;
+        entity.RoundEndedAt = null;
+        if (message is not null)
+            entity.GreetingMessage = message;
 
-        dbContext.Channels.Update(channel);
+        if (entity.GreetingMessage.IsEmpty())
+            entity.GreetingMessage = "Heyo, Pingjata party time!";
+
+        dbContext.Channels.Update(entity);
         await dbContext.SaveChangesAsync();
+
+        await channel.SendMessageAsync(entity.GreetingMessage);
 
         return value;
     }

@@ -12,14 +12,15 @@ public class PingHandler(DiscordSocketClient client, ILogger<PingHandler> logger
 
     protected override async Task HandleAsync(SocketMessage message)
     {
-        if(message.Channel.IsThread())
+        if (message.Channel.IsThread())
+            return;
+
+        if (message.Author.IsBot || message.Author.IsWebhook)
             return;
 
         if (!message.MentionedUserIds.Contains(Client.CurrentUser.Id))
             return;
 
-        int result = await counterService.IncreaseCounter(message.Channel.Id.ToString());
-
-        logger.LogInformation("Counter increased. Result is {Result}", result);
+        await counterService.IncreaseCounter(message.Channel, message.Author.Id);
     }
 }

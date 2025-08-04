@@ -12,50 +12,49 @@ public class PingjataCommandHandler(
     CounterService counterService)
     : SlashCommandHandler(client, logger)
 {
-    private const string SetCommandName = "set";
     private const string StartCommandName = "start";
     private const string PauseCommandName = "pause";
+    private const string UnpauseCommandName = "unpause";
     private const string StopCommandName = "stop";
     private const string StatusCommandName = "status";
     private const string ResetCommandName = "reset";
     private const string HelpCommandName = "help";
 
-    private const string SetCommandNumberOptionName = "value";
+    private const string StartCommandNumberOptionName = "value";
     private const string StartCommandMessageOptionName = "message";
 
     #region CommandBuilder
 
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("pingjata")
-        .WithDescription("Manage the Pingjata bot".Take(DescriptionMaxLength).ToString())
+        .WithDescription((Description)"Manage the Pingjata bot")
         .AddOption(new SlashCommandOptionBuilder()
             .WithType(ApplicationCommandOptionType.SubCommand)
-            .WithName(SetCommandName)
+            .WithName(StartCommandName)
             .WithDescription(
                 (Description)
                 "Set the threshold for the current channel, will end current round without a winner if used during a round.")
             .AddOption(new SlashCommandOptionBuilder()
-                .WithName(SetCommandNumberOptionName)
+                .WithName(StartCommandNumberOptionName)
                 .WithDescription((Description)"The threshold value or min-max")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithRequired(true)
                 .WithMinLength(1)
-                .WithMaxLength(100)))
-        .AddOption(new SlashCommandOptionBuilder()
-            .WithType(ApplicationCommandOptionType.SubCommand)
-            .WithName(StartCommandName)
-            .WithDescription((Description)"Set this channel as one to be counted in, and set a greeting message.")
+                .WithMaxLength(100))
             .AddOption(new SlashCommandOptionBuilder()
                 .WithName(StartCommandMessageOptionName)
                 .WithDescription((Description)"The greeting message to send")
                 .WithType(ApplicationCommandOptionType.String)
                 .WithMinLength(1)
-                .WithMaxLength(500)
-                .WithRequired(true)))
+                .WithMaxLength(500)))
         .AddOption(new SlashCommandOptionBuilder()
             .WithType(ApplicationCommandOptionType.SubCommand)
             .WithName(PauseCommandName)
             .WithDescription((Description)"Pause counting (no new pings recorded)."))
+        .AddOption(new SlashCommandOptionBuilder()
+            .WithType(ApplicationCommandOptionType.SubCommand)
+            .WithName(UnpauseCommandName)
+            .WithDescription((Description)"Resume counting."))
         .AddOption(new SlashCommandOptionBuilder()
             .WithType(ApplicationCommandOptionType.SubCommand)
             .WithName(StopCommandName)
@@ -77,6 +76,11 @@ public class PingjataCommandHandler(
 
     protected override Task HandleAsync(SocketSlashCommand command)
     {
+        if (command.Channel.IsThread())
+        {
+            return RespondWithError(command, "Channel cannot be a thread");
+        }
+
         SocketSlashCommandDataOption? subCommand = command.Data.Options.FirstOrDefault();
 
         if (subCommand is null)
@@ -86,9 +90,9 @@ public class PingjataCommandHandler(
 
         return subCommand.Name switch
         {
-            SetCommandName => OnSetCommand(command, args.ToList()),
             StartCommandName => OnStartCommand(command, args.ToList()),
             PauseCommandName => OnPauseCommand(command),
+            UnpauseCommandName => OnUnpauseCommand(command),
             StopCommandName => OnStopCommand(command),
             StatusCommandName => OnStatusCommand(command),
             ResetCommandName => OnResetCommand(command),
@@ -97,7 +101,7 @@ public class PingjataCommandHandler(
         };
     }
 
-    private async Task OnSetCommand(SocketSlashCommand command, List<SocketSlashCommandDataOption>? args)
+    private async Task OnStartCommand(SocketSlashCommand command, List<SocketSlashCommandDataOption>? args)
     {
         if (args is null || args.Count == 0)
         {
@@ -106,21 +110,23 @@ public class PingjataCommandHandler(
             return;
         }
 
-        SocketSlashCommandDataOption arg = args[0];
+        SocketSlashCommandDataOption? thresholdArg = args.FirstOrDefault(a => a.Name == StartCommandNumberOptionName);
 
-        if (arg.Name != SetCommandNumberOptionName || arg.Value is not string argStr)
+        if (thresholdArg is null || thresholdArg.Name != StartCommandNumberOptionName || thresholdArg.Value is not string argStr)
         {
             await RespondWithError(command, "Unknown argument at index 0");
 
             return;
         }
 
+        string? greetingArg = args.FirstOrDefault(a => a.Name == StartCommandMessageOptionName)?.Value as string;
+
         bool isThreshold = int.TryParse(argStr, out int value);
         int result;
 
         if (isThreshold)
         {
-            result = await counterService.SetThreshold(command.Channel.Id.ToString(), value);
+            result = await counterService.StartRound(command.Channel, value, message: greetingArg);
 
             await command.RespondAsync($"Started new round with threshold: {result}", ephemeral: true);
 
@@ -128,6 +134,7 @@ public class PingjataCommandHandler(
         }
 
         string[] splitArg = argStr.Split('-');
+
         if (splitArg.Length != 2 || !int.TryParse(splitArg[0], out int min) || !int.TryParse(splitArg[1], out int max))
         {
             await RespondWithError(command, "Could not parse threshold or range");
@@ -135,38 +142,18 @@ public class PingjataCommandHandler(
             return;
         }
 
-        result = await counterService.SetThreshold(command.Channel.Id.ToString(), min, max);
+        result = await counterService.StartRound(command.Channel, min, max, greetingArg);
         await command.RespondAsync($"Started new round with threshold: {result}", ephemeral: true);
-    }
-
-    private async Task OnStartCommand(SocketSlashCommand command, List<SocketSlashCommandDataOption>? args)
-    {
-        if (command.Channel.IsThread())
-        {
-            await RespondWithError(command, "Channel cannot be a thread");
-
-            return;
-        }
-
-        string? arg = args?.FirstOrDefault(a => a.Name == StartCommandMessageOptionName)?.Value as string;
-
-        if (arg.IsEmpty())
-        {
-            await RespondWithError(command, $"Must provide a value for {StartCommandMessageOptionName}");
-
-            return;
-        }
-
-        await counterService.StartRound(command.Channel.Id.ToString(), arg!);
-
-        await command.RespondAsync(
-            "Greeting message set. Use \"pingjata set <value>\" to set the threshold and start counting",
-            ephemeral: true);
     }
 
     private async Task OnPauseCommand(SocketSlashCommand command)
     {
         await command.RespondAsync("Pause command executed", ephemeral: true);
+    }
+
+    private async Task OnUnpauseCommand(SocketSlashCommand command)
+    {
+        await command.RespondAsync("Unpause command executed", ephemeral: true);
     }
 
     private async Task OnStopCommand(SocketSlashCommand command)
