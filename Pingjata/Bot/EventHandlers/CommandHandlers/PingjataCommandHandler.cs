@@ -76,10 +76,11 @@ public class PingjataCommandHandler(
 
     protected override Task HandleAsync(SocketSlashCommand command)
     {
+        if (command.Channel.IsDm(command.User))
+            return RespondWithError(command, "Channel cannot be DM");
+
         if (command.Channel.IsThread())
-        {
             return RespondWithError(command, "Channel cannot be a thread");
-        }
 
         SocketSlashCommandDataOption? subCommand = command.Data.Options.FirstOrDefault();
 

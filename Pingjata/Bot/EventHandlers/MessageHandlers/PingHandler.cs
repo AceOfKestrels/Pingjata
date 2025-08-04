@@ -12,6 +12,9 @@ public class PingHandler(DiscordSocketClient client, ILogger<PingHandler> logger
 
     protected override async Task HandleAsync(SocketMessage message)
     {
+        if (message.Channel.IsDm(message.Author))
+            return;
+
         if (message.Channel.IsThread())
             return;
 

@@ -24,10 +24,6 @@ public class CounterService(
     /// <summary>
     /// Increases the counter for a given channel if a round is currently active
     /// </summary>
-    /// <returns>
-    /// -1 if there is currently no round active in this channel, 0 if the counter was increased,
-    /// or the channel's threshold if it is reached
-    /// </returns>
     public async Task IncreaseCounter(ISocketMessageChannel channel, ulong userId)
     {
         ChannelEntity? entity = await GetChannel(channel.Id);

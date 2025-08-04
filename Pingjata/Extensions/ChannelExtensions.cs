@@ -15,4 +15,9 @@ public static class ChannelExtensions
     {
         return ThreadChannelTypes.Contains(channel.ChannelType);
     }
+
+    public static bool IsDm(this ISocketMessageChannel channel, IUser user)
+    {
+        return channel.Name == $"@{user.Username}";
+    }
 }
