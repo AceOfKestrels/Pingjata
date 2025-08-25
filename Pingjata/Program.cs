@@ -7,17 +7,14 @@ using Pingjata.Persistence;
 using Pingjata.Service;
 using Serilog;
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .CreateLogger();
-
 try
 {
     WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-    IServiceCollection services = builder.Services;
+    builder.Host.UseSerilog((ctx, lc) => lc
+        .ReadFrom.Configuration(ctx.Configuration));
 
-    services.AddSerilog();
+    IServiceCollection services = builder.Services;
 
     string connectionString = GetDbConnectionString();
     services.AddDbContextFactory<ApplicationDbContext>(options =>
