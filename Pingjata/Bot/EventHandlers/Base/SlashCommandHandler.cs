@@ -57,6 +57,13 @@ public abstract class SlashCommandHandler(DiscordSocketClient client, ILogger<Sl
     }
 
     protected abstract Task HandleAsync(SocketSlashCommand command);
+
+    protected virtual Task RespondWithError(SocketSlashCommand command, string error)
+    {
+        logger.LogWarning("Received invalid command: {Error}", error);
+
+        return command.RespondAsync(error, ephemeral: true);
+    }
     
     protected readonly struct Description
     {

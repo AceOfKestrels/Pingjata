@@ -32,7 +32,14 @@ try
 
     services.AddHostedService<PingHandler>();
     services.AddHostedService<DmHandler>();
-    services.AddHostedService<PingjataCommandHandler>();
+
+    services.AddHostedService<HelpCommandHandler>();
+    services.AddHostedService<PauseCommandHandler>();
+    services.AddHostedService<ResetCommandHandler>();
+    services.AddHostedService<StartCommandHandler>();
+    services.AddHostedService<StatusCommandHandler>();
+    services.AddHostedService<StopCommandHandler>();
+    services.AddHostedService<UnpauseCommandHandler>();
 
     WebApplication app = builder.Build();
 
