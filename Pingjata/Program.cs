@@ -26,11 +26,11 @@ try
     });
 
     services.AddSingleton<CounterService>();
-    services.AddSingleton<SlashCommandManager>();
 
     services.AddSingleton(new DiscordSocketClient());
 
-    services.AddHostedService<DiscordBot>();
+    services.AddSingleton<DiscordBot>();
+    services.AddHostedService(p => p.GetRequiredService<DiscordBot>());
 
     services.AddHostedService<PingHandler>();
     services.AddHostedService<DmHandler>();
@@ -42,6 +42,9 @@ try
     services.AddHostedService<StatusCommandHandler>();
     services.AddHostedService<StopCommandHandler>();
     services.AddHostedService<UnpauseCommandHandler>();
+
+    services.AddSingleton<PingService>();
+    services.AddHostedService(p => p.GetRequiredService<PingService>());
 
     WebApplication app = builder.Build();
 

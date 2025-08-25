@@ -8,9 +8,9 @@ namespace Pingjata.Bot.EventHandlers.CommandHandlers;
 
 public class StartCommandHandler(
     DiscordSocketClient client,
-    SlashCommandManager commandManager,
+    DiscordBot bot,
     ILogger<StartCommandHandler> logger,
-    CounterService counterService) : SlashCommandHandler(client, commandManager, logger)
+    CounterService counterService) : SlashCommandHandler(client, bot, logger)
 {
     private const string ThresholdOption = "threshold";
     private const string MessageOption = "message";

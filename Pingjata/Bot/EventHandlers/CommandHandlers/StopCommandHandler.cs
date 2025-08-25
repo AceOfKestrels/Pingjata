@@ -6,8 +6,8 @@ using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
 
-public class StopCommandHandler(DiscordSocketClient client, SlashCommandManager commandManager, ILogger<StopCommandHandler> logger)
-    : SlashCommandHandler(client, commandManager, logger)
+public class StopCommandHandler(DiscordSocketClient client, DiscordBot bot, ILogger<StopCommandHandler> logger)
+    : SlashCommandHandler(client, bot, logger)
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("stop")

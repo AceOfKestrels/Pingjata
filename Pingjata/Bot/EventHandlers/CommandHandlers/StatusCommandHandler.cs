@@ -6,8 +6,8 @@ using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
 
-public class StatusCommandHandler(DiscordSocketClient client, SlashCommandManager commandManager, ILogger<StatusCommandHandler> logger)
-    : SlashCommandHandler(client, commandManager, logger)
+public class StatusCommandHandler(DiscordSocketClient client, DiscordBot bot, ILogger<StatusCommandHandler> logger)
+    : SlashCommandHandler(client, bot, logger)
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("status")

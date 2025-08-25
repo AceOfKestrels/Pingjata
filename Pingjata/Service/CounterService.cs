@@ -10,6 +10,7 @@ namespace Pingjata.Service;
 public class CounterService(
     ILogger<CounterService> logger,
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
+    PingService pingService,
     DiscordSocketClient client)
 {
     public async Task<ChannelEntity?> GetChannel(ulong channelId)
@@ -66,13 +67,12 @@ public class CounterService(
         if (user is not null)
         {
             await channel.SendMessageAsync($"@here\nRound has ended!\nThe winner is {user.Mention}");
+            await user.SendMessageAsync("New threshold please");
 
             for (int i = 0; i < entity.Threshold; i++)
             {
-                await user.SendMessageAsync(user.Mention);
+                pingService.QueuePing(user);
             }
-
-            await user.SendMessageAsync("New threshold please");
         }
     }
 

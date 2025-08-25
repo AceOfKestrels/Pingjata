@@ -2,11 +2,11 @@ using Discord;
 using Discord.WebSocket;
 using Pingjata.Bot.EventHandlers.Base;
 using Pingjata.Extensions;
-using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
 
-public class PauseCommandHandler(DiscordSocketClient client, SlashCommandManager commandManager, ILogger<PauseCommandHandler> logger) : SlashCommandHandler(client, commandManager, logger)
+public class PauseCommandHandler(DiscordSocketClient client, DiscordBot bot, ILogger<PauseCommandHandler> logger)
+    : SlashCommandHandler(client, bot, logger)
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("pause")
