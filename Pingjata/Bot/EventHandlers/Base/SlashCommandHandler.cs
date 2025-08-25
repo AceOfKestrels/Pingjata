@@ -1,39 +1,26 @@
 using System.Text;
 using Discord;
 using Discord.WebSocket;
+using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.Base;
 
-public abstract class SlashCommandHandler(DiscordSocketClient client, ILogger<SlashCommandHandler> logger) : EventHandler(client)
+public abstract class SlashCommandHandler(DiscordSocketClient client, SlashCommandManager commandManager, ILogger<SlashCommandHandler> logger) : EventHandler(client)
 {
     public const int DescriptionMaxLength = 100;
     protected abstract SlashCommandBuilder Command { get; }
 
     public override Task StartAsync(CancellationToken cancellationToken)
     {
-        Client.Ready += RegisterCommand;
+        commandManager.RegisterSlashCommand(Command);
+        Client.SlashCommandExecuted += HandleInternalAsync;
         return Task.CompletedTask;
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
         Client.SlashCommandExecuted -= HandleInternalAsync;
-        Client.Ready -= RegisterCommand;
         return Task.CompletedTask;
-    }
-
-    private async Task RegisterCommand()
-    {
-        try
-        {
-            await Client.CreateGlobalApplicationCommandAsync(Command.Build());
-        }
-        catch (Exception e)
-        {
-            logger.LogError("Failed to initialize command: {Error}", e);
-        }
-
-        Client.SlashCommandExecuted += HandleInternalAsync;
     }
 
     private Task HandleInternalAsync(SocketSlashCommand command)

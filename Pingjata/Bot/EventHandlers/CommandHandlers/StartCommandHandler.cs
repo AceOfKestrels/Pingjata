@@ -8,8 +8,9 @@ namespace Pingjata.Bot.EventHandlers.CommandHandlers;
 
 public class StartCommandHandler(
     DiscordSocketClient client,
+    SlashCommandManager commandManager,
     ILogger<StartCommandHandler> logger,
-    CounterService counterService) : SlashCommandHandler(client, logger)
+    CounterService counterService) : SlashCommandHandler(client, commandManager, logger)
 {
     private const string ThresholdOption = "threshold";
     private const string MessageOption = "message";
@@ -38,12 +39,14 @@ public class StartCommandHandler(
         if (command.Channel.IsDm(command.User))
         {
             await RespondWithError(command, "Channel cannot be DM");
+
             return;
         }
 
         if (command.Channel.IsThread())
         {
             await RespondWithError(command, "Channel cannot be a thread");
+
             return;
         }
 

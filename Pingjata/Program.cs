@@ -26,8 +26,10 @@ try
     });
 
     services.AddSingleton<CounterService>();
+    services.AddSingleton<SlashCommandManager>();
 
     services.AddSingleton(new DiscordSocketClient());
+
     services.AddHostedService<DiscordBot>();
 
     services.AddHostedService<PingHandler>();

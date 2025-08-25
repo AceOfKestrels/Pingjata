@@ -2,11 +2,12 @@ using Discord;
 using Discord.WebSocket;
 using Pingjata.Bot.EventHandlers.Base;
 using Pingjata.Extensions;
+using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
 
-public class UnpauseCommandHandler(DiscordSocketClient client, ILogger<UnpauseCommandHandler> logger)
-    : SlashCommandHandler(client, logger)
+public class UnpauseCommandHandler(DiscordSocketClient client, SlashCommandManager commandManager, ILogger<UnpauseCommandHandler> logger)
+    : SlashCommandHandler(client, commandManager, logger)
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("unpause")
