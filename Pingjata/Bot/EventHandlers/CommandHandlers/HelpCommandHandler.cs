@@ -9,7 +9,7 @@ public class HelpCommandHandler(DiscordSocketClient client, DiscordBot bot, ILog
     : SlashCommandHandler(client, bot, logger)
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
-        .WithName("status")
+        .WithName("help")
         .WithDescription((Description)"Show current threshold, count, and state.");
 
     protected override Task HandleAsync(SocketSlashCommand command)

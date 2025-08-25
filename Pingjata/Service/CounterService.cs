@@ -118,7 +118,7 @@ public class CounterService(
         return value;
     }
 
-    public async Task<Result<int>> RestartRound(ulong channelId, string? threshold = null)
+    public async Task<Result<int>> RestartRoundForChannel(ulong channelId, string? threshold = null)
     {
         ISocketMessageChannel? channel = (await client.GetChannelAsync(channelId)) as ISocketMessageChannel;
 
@@ -126,6 +126,20 @@ public class CounterService(
             return (Error)"Unknown channel";
 
         return await StartRound(channel, threshold);
+    }
+
+    public async Task<Result<int>> RestartRoundForUser(ulong userId, string threshold)
+    {
+        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
+        ChannelEntity? entity = await dbContext.Channels.FirstOrDefaultAsync(c => c.WinnerId == userId.ToString());
+
+        if (entity is null)
+            return (Error)"User is no winner";
+
+        if (!ulong.TryParse(entity.ChannelId, out ulong channelId))
+            return (Error)"Invalid channel id";
+
+        return await RestartRoundForChannel(channelId, threshold);
     }
 
     private int? GetThresholdValue(string threshold)

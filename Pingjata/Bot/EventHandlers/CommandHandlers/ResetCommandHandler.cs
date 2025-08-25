@@ -15,7 +15,7 @@ public class ResetCommandHandler(
     : SlashCommandHandler(client, bot, logger)
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
-        .WithName("status")
+        .WithName("reset")
         .WithDescription((Description)"Show current threshold, count, and state.");
 
     protected override async Task HandleAsync(SocketSlashCommand command)
@@ -34,7 +34,7 @@ public class ResetCommandHandler(
             return;
         }
 
-        Result<int> result = await counterService.RestartRound(command.Channel.Id);
+        Result<int> result = await counterService.RestartRoundForChannel(command.Channel.Id);
 
         if (result.IsError)
         {

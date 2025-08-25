@@ -40,7 +40,7 @@ public class AutoResetService(
                 if (!ulong.TryParse(channel.ChannelId, out ulong channelId))
                     continue;
 
-                Result<int> result = await counterService.RestartRound(channelId);
+                Result<int> result = await counterService.RestartRoundForChannel(channelId);
 
                 if (result.IsError)
                     logger.LogWarning(result.Error.LogMessage);
