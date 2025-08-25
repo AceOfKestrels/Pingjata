@@ -32,6 +32,8 @@ try
     services.AddSingleton<DiscordBot>();
     services.AddHostedService(p => p.GetRequiredService<DiscordBot>());
 
+    services.AddHostedService<AutoResetService>();
+
     services.AddHostedService<PingHandler>();
     services.AddHostedService<DmHandler>();
 

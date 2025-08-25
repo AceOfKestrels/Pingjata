@@ -2,6 +2,7 @@ using Discord;
 using Discord.WebSocket;
 using Pingjata.Bot.EventHandlers.Base;
 using Pingjata.Extensions;
+using Pingjata.ResultPattern;
 using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
@@ -60,28 +61,15 @@ public class StartCommandHandler(
             return;
         }
 
-        bool isThreshold = int.TryParse(threshold, out int value);
-        int result;
+        Result<int> result = await counterService.StartRound(command.Channel, threshold, message);
 
-        if (isThreshold)
-        {
-            result = await counterService.StartRound(command.Channel, value, message: message);
-
-            await command.RespondAsync($"Started new round with threshold: {result}", ephemeral: true);
-
-            return;
-        }
-
-        string[] splitArg = threshold.Split('-');
-
-        if (splitArg.Length != 2 || !int.TryParse(splitArg[0], out int min) || !int.TryParse(splitArg[1], out int max))
+        if (result.IsError)
         {
             await RespondWithError(command, "Could not parse threshold or range");
 
             return;
         }
 
-        result = await counterService.StartRound(command.Channel, min, max, message);
-        await command.RespondAsync($"Started new round with threshold: {result}", ephemeral: true);
+        await command.RespondAsync($"Started new round with threshold: {result.Value}", ephemeral: true);
     }
 }
