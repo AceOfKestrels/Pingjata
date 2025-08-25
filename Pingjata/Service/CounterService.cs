@@ -128,7 +128,7 @@ public class CounterService(
         return await StartRound(channel, threshold);
     }
 
-    public async Task<Result<int>> RestartRoundForUser(ulong userId, string threshold)
+    public async Task<Result<(int threshold, ulong channelId)>> RestartRoundForUser(ulong userId, string threshold)
     {
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
         ChannelEntity? entity = await dbContext.Channels.FirstOrDefaultAsync(c => c.WinnerId == userId.ToString());
@@ -139,7 +139,12 @@ public class CounterService(
         if (!ulong.TryParse(entity.ChannelId, out ulong channelId))
             return (Error)"Invalid channel id";
 
-        return await RestartRoundForChannel(channelId, threshold);
+        Result<int> result = await RestartRoundForChannel(channelId, threshold);
+
+        if (result.IsError)
+            return result.Error;
+
+        return (result.Value, channelId);
     }
 
     private int? GetThresholdValue(string threshold)
