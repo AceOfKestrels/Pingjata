@@ -34,15 +34,14 @@ jobs:
       - name: Validate Dockerfiles with Hadolint
         run: |
           echo "Validating Dockerfiles..."
-          find . -name 'Dockerfile' | while read dockerfile; do
-            echo "Validating $dockerfile"
-            docker run --rm -i hadolint/hadolint < "$dockerfile" || { echo "❌ Validation failed for $dockerfile"; exit 1; }
-          done
+          dockerfile=Pingjata/Dockerfile
+          echo "Validating $dockerfile"
+          docker run --rm -i hadolint/hadolint < "$dockerfile" || { echo "❌ Validation failed for $dockerfile"; exit 1; }
           echo "✅ All Dockerfiles are valid."
 
   build-images-amd64:
     name: Build and Push Docker Images (AMD64)
-    needs: [build, validate]
+    needs: [ build, validate ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -62,33 +61,28 @@ jobs:
 
       - name: Build and Push Images (AMD64)
         run: |
-          services=$(docker-compose -f docker-compose.build.yml config --services)
-          for service in $services; do
-            echo "Processing service: $service"
-            image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="$service" '
-              $0 ~ srv {found=1}
-              found && /image:/ {print $2; exit}
-            ')
-            if [ -z "$image_name" ]; then
-              echo "❌ Image name not found for service: $service"
-              exit 1
-            fi
-            image_name_with_registry="ghcr.io/${{ github.repository_owner }}/${image_name}"
-            # Ensure the repository name is lowercase
-            image_name_with_registry=$(echo "$image_name_with_registry" | tr '[:upper:]' '[:lower:]')
-            echo "Building (AMD64) $image_name_with_registry"
-            docker build --file "./${image_name}/Dockerfile" \
-              --build-arg INSTALL_GO=true \
-              --build-arg ARCH="x64" \
-              -t "$image_name_with_registry:amd64" .
-            docker push "$image_name_with_registry:amd64"
-          done
+          image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="pingjata-app" '
+            $0 ~ srv {found=1}
+            found && /image:/ {print $2; exit}
+          ')
+          if [ -z "$image_name" ]; then
+            echo "❌ Image name not found for service: pingjata-app"
+            exit 1
+          fi
+          image_name_with_registry="ghcr.io/${{ github.repository_owner }}/${image_name}"
+          # Ensure the repository name is lowercase
+          image_name_with_registry=$(echo "$image_name_with_registry" | tr '[:upper:]' '[:lower:]')
+          echo "Building (AMD64) $image_name_with_registry"
+          docker build --file "./Pingjata/Dockerfile" \
+            --build-arg ARCH="x64" \
+            -t "$image_name_with_registry:amd64" .
+          docker push "$image_name_with_registry:amd64"
 
   #### 3. Build Images for ARM64
   build-images-arm64:
     name: Build and Push Docker Images (ARM64)
-    needs: [build, validate]
-    runs-on: ubuntu-latest-arm
+    needs: [ build, validate ]
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -107,26 +101,21 @@ jobs:
 
       - name: Build and Push Images (ARM64)
         run: |
-          services=$(docker-compose -f docker-compose.build.yml config --services)
-          for service in $services; do
-            echo "Processing service: $service"
-            image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="$service" '
-              $0 ~ srv {found=1}
-              found && /image:/ {print $2; exit}
-            ')
-            if [ -z "$image_name" ]; then
-              echo "❌ Image name not found for service: $service"
-              exit 1
-            fi
-            image_name_with_registry="ghcr.io/${{ github.repository_owner }}/${image_name}"
-            image_name_with_registry=$(echo "$image_name_with_registry" | tr '[:upper:]' '[:lower:]')
-            echo "Building (ARM64) $image_name_with_registry"
-            docker build --file "./${image_name}/Dockerfile" \
-              --build-arg INSTALL_GO=true \
-              --build-arg ARCH="arm64" \
-              -t "$image_name_with_registry:arm64" .
-            docker push "$image_name_with_registry:arm64"
-          done
+          image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="pingjata-app" '
+            $0 ~ srv {found=1}
+            found && /image:/ {print $2; exit}
+          ')
+          if [ -z "$image_name" ]; then
+            echo "❌ Image name not found for service: $service"
+            exit 1
+          fi
+          image_name_with_registry="ghcr.io/${{ github.repository_owner }}/${image_name}"
+          image_name_with_registry=$(echo "$image_name_with_registry" | tr '[:upper:]' '[:lower:]')
+          echo "Building (ARM64) $image_name_with_registry"
+          docker build --file "./Pingjata/Dockerfile" \
+            --build-arg ARCH="arm64" \
+            -t "$image_name_with_registry:arm64" .
+          docker push "$image_name_with_registry:arm64"
 
   #### 4. Create Multi-Arch Manifest Using the Release Tag (No Latest Alias)
   create-manifest:
@@ -155,24 +144,20 @@ jobs:
         run: |
           RELEASE_TAG="${{ github.event.release.tag_name }}"
           echo "Using release tag: ${RELEASE_TAG}"
-          services=$(docker-compose -f docker-compose.build.yml config --services)
-          for service in $services; do
-            echo "Processing service: $service for manifest creation"
-            image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="$service" '
-              $0 ~ srv {found=1}
-              found && /image:/ {print $2; exit}
-            ')
-            if [ -z "$image_name" ]; then
-              echo "❌ Image name not found for service: $service"
-              exit 1
-            fi
-            image_name_with_registry="ghcr.io/${{ github.repository_owner }}/${image_name}"
-            image_name_with_registry=$(echo "$image_name_with_registry" | tr '[:upper:]' '[:lower:]')
-            manifest_tag="${image_name_with_registry}:${RELEASE_TAG}"
-            echo "Creating manifest for $manifest_tag"
-            docker manifest create "$manifest_tag" "$image_name_with_registry:amd64" "$image_name_with_registry:arm64"
-            docker manifest push "$manifest_tag"
-          done
+          image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="pingjata-app" '
+            $0 ~ srv {found=1}
+            found && /image:/ {print $2; exit}
+          ')
+          if [ -z "$image_name" ]; then
+            echo "❌ Image name not found for service: pingjata-app"
+            exit 1
+          fi
+          image_name_with_registry="ghcr.io/${{ github.repository_owner }}/${image_name}"
+          image_name_with_registry=$(echo "$image_name_with_registry" | tr '[:upper:]' '[:lower:]')
+          manifest_tag="${image_name_with_registry}:${RELEASE_TAG}"
+          echo "Creating manifest for $manifest_tag"
+          docker manifest create "$manifest_tag" "$image_name_with_registry:amd64" "$image_name_with_registry:arm64"
+          docker manifest push "$manifest_tag"
 
   #### 5. Validate the Pushed Manifests (Pull Test)
   validate-images:
@@ -191,22 +176,19 @@ jobs:
       - name: Verify Manifest Images
         run: |
           RELEASE_TAG="${{ github.event.release.tag_name }}"
-          services=$(docker-compose -f docker-compose.build.yml config --services)
-          for service in $services; do
-            image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="$service" '
-              $0 ~ srv {found=1}
-              found && /image:/ {print $2; exit}
-            ')
-            if [ -z "$image_name" ]; then
-              echo "❌ Image name not found for service: $service"
-              exit 1
-            fi
-            image_name_with_registry="ghcr.io/${{ github.repository_owner }}/${image_name}"
-            image_name_with_registry=$(echo "$image_name_with_registry" | tr '[:upper:]' '[:lower:]')
-            manifest_tag="${image_name_with_registry}:${RELEASE_TAG}"
-            echo "Verifying manifest image: $manifest_tag"
-            docker pull "$manifest_tag" || { echo "❌ Failed to pull image: $manifest_tag"; exit 1; }
-          done
+          image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="pingjata-app" '
+            $0 ~ srv {found=1}
+            found && /image:/ {print $2; exit}
+          ')
+          if [ -z "$image_name" ]; then
+            echo "❌ Image name not found for service: pingjata-app"
+            exit 1
+          fi
+          image_name_with_registry="ghcr.io/${{ github.repository_owner }}/${image_name}"
+          image_name_with_registry=$(echo "$image_name_with_registry" | tr '[:upper:]' '[:lower:]')
+          manifest_tag="${image_name_with_registry}:${RELEASE_TAG}"
+          echo "Verifying manifest image: $manifest_tag"
+          docker pull "$manifest_tag" || { echo "❌ Failed to pull image: $manifest_tag"; exit 1; }
 
   #### 7. Cleanup Old Build Artifact Tags (Preserve Underlying Images for Manifest)
   cleanup-tags:
@@ -230,29 +212,26 @@ jobs:
         run: |
           echo "Cleaning up old build artifact tags..."
           services=$(docker-compose -f docker-compose.build.yml config --services)
-          for service in $services; do
-            echo "Processing service: $service"
-            image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="$service" '
-              $0 ~ srv {found=1}
-              found && /image:/ {print $2; exit}
-            ')
-            if [ -z "$image_name" ]; then
-              echo "❌ Image name not found for service: $service"
-              exit 1
+          image_name=$(docker-compose -f docker-compose.build.yml config | awk -v srv="pingjata-app" '
+            $0 ~ srv {found=1}
+            found && /image:/ {print $2; exit}
+          ')
+          if [ -z "$image_name" ]; then
+            echo "❌ Image name not found for service: pingjata-app"
+            exit 1
+          fi
+          package_name=$(echo "$image_name" | tr '[:upper:]' '[:lower:]')
+          echo "Cleaning up build artifact tags for package: $OWNER/$package_name"
+          versions=$(gh api --paginate "/users/$OWNER/packages/container/$package_name/versions" --jq '.[]')
+          echo "$versions" | jq -c 'select(.metadata.container.tags[]? | test("^(amd64|arm64)$"))' | while read version; do
+            created_at=$(echo "$version" | jq -r '.created_at')
+            # Only delete versions older than 30 days
+            if [[ $(date -d "$created_at" +%s) -lt $(date -d "30 days ago" +%s) ]]; then
+              version_id=$(echo "$version" | jq -r '.id')
+              tags=$(echo "$version" | jq -r '.metadata.container.tags | join(",")')
+              echo "Deleting version $version_id with tags: $tags"
+              gh api -X DELETE "/users/$OWNER/packages/container/$package_name/versions/$version_id"
+            else
+              echo "Keeping recent version created at $created_at"
             fi
-            package_name=$(echo "$image_name" | tr '[:upper:]' '[:lower:]')
-            echo "Cleaning up build artifact tags for package: $OWNER/$package_name"
-            versions=$(gh api --paginate "/users/$OWNER/packages/container/$package_name/versions" --jq '.[]')
-            echo "$versions" | jq -c 'select(.metadata.container.tags[]? | test("^(amd64|arm64)$"))' | while read version; do
-              created_at=$(echo "$version" | jq -r '.created_at')
-              # Only delete versions older than 30 days
-              if [[ $(date -d "$created_at" +%s) -lt $(date -d "30 days ago" +%s) ]]; then
-                version_id=$(echo "$version" | jq -r '.id')
-                tags=$(echo "$version" | jq -r '.metadata.container.tags | join(",")')
-                echo "Deleting version $version_id with tags: $tags"
-                gh api -X DELETE "/users/$OWNER/packages/container/$package_name/versions/$version_id"
-              else
-                echo "Keeping recent version created at $created_at"
-              fi
-            done
           done
