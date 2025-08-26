@@ -34,6 +34,7 @@ public class AutoResetService(
 
             List<ChannelEntity> channels = dbContext.Channels
                 .Where(c => DateTime.UtcNow - c.RoundEndedAt > TimeSpan.FromMinutes(120))
+                .Where(c => !c.IsPaused)
                 .ToList();
 
             foreach (ChannelEntity channel in channels)

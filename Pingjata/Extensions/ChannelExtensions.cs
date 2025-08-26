@@ -21,8 +21,11 @@ public static class ChannelExtensions
         return channel.Name == $"@{user.Username}";
     }
 
-    public static string GetChanelLink(this SocketGuildChannel channel)
+    public static string? GetChanelLink(this IChannel channel)
     {
-        return $"https://discord.com/channels/{channel.Guild.Id}/{channel.Id}";
+        if (channel is not SocketGuildChannel guildChannel)
+            return null;
+
+        return $"https://discord.com/channels/{guildChannel.Guild.Id}/{guildChannel.Id}";
     }
 }
