@@ -15,6 +15,7 @@ public class AutoResetService(
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _ = CheckChannels(cancellationToken);
+
         return Task.CompletedTask;
     }
 
@@ -32,7 +33,7 @@ public class AutoResetService(
             await Task.Delay(TimeSpan.FromSeconds(60), CancellationToken.None);
 
             List<ChannelEntity> channels = dbContext.Channels
-                .Where(c => c.RoundEndedAt - DateTime.UtcNow > TimeSpan.FromMinutes(120))
+                .Where(c => DateTime.UtcNow - c.RoundEndedAt > TimeSpan.FromMinutes(120))
                 .ToList();
 
             foreach (ChannelEntity channel in channels)

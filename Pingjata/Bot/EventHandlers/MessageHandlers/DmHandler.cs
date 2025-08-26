@@ -31,7 +31,11 @@ public class DmHandler(DiscordSocketClient client, ILogger<DmHandler> logger, Co
         if (result.IsError)
             return;
 
+        SocketGuildChannel? guildChannel = await Client.GetChannelAsync(result.Value.channelId) as SocketGuildChannel;
+
+        string channelMention = guildChannel is null ? string.Empty : $"{guildChannel.GetChanelLink()}\n";
+
         await message.Channel.SendMessageAsync(
-            $"{result.Value.channelId}\nStarted new round with threshold: {result.Value.threshold}");
+            $"{channelMention}Started new round with threshold: {result.Value.threshold}");
     }
 }

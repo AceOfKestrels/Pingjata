@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Pingjata.Persistence.Models;
+using Pingjata.ResultPattern;
 
 namespace Pingjata.Persistence;
 
@@ -27,5 +28,19 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Property(b => b.WinnerId).HasColumnName("winner_id");
         builder.Property(b => b.RoundEndedAt).HasColumnName("round_ended_at");
         builder.Property(b => b.IsPaused).HasColumnName("is_paused");
+    }
+
+    public async Task<Result> TrySaveChangesAsync()
+    {
+        try
+        {
+            await SaveChangesAsync();
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            return (Error)e.ToString();
+        }
     }
 }

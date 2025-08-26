@@ -16,14 +16,21 @@ public class CounterService(
 {
     public async Task<Result<ChannelEntity>> GetChannel(ulong channelId)
     {
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
+        try
+        {
+            await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
 
-        ChannelEntity? channel = await dbContext.Channels.FindAsync(channelId.ToString());
+            ChannelEntity? channel = await dbContext.Channels.FindAsync(channelId.ToString());
 
-        if (channel is null)
-            return (Error)"Channel not found";
+            if (channel is null)
+                return (Error)"Channel not found";
 
-        return channel;
+            return channel;
+        }
+        catch (Exception e)
+        {
+            return (Error)e.ToString();
+        }
     }
 
     /// <summary>
@@ -45,7 +52,9 @@ public class CounterService(
         entity.CurrentCounter++;
 
         dbContext.Channels.Update(entity);
-        await dbContext.SaveChangesAsync();
+
+        if (!await dbContext.TrySaveChangesAsync())
+            return (Error)"Failed to save entity";
 
         return true;
     }
@@ -66,7 +75,9 @@ public class CounterService(
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
 
         dbContext.Channels.Update(entity);
-        await dbContext.SaveChangesAsync();
+
+        if (!await dbContext.TrySaveChangesAsync())
+            return (Error)"Failed to save entity";
 
         if (user is not null)
         {
@@ -111,7 +122,9 @@ public class CounterService(
             entity.GreetingMessage = "Heyo, Pingjata party time!";
 
         dbContext.Channels.Update(entity);
-        await dbContext.SaveChangesAsync();
+
+        if (!await dbContext.TrySaveChangesAsync())
+            return (Error)"Failed to save entity";
 
         await channel.SendMessageAsync(entity.GreetingMessage);
 
@@ -123,7 +136,7 @@ public class CounterService(
         ISocketMessageChannel? channel = (await client.GetChannelAsync(channelId)) as ISocketMessageChannel;
 
         if (channel is null)
-            return (Error)"Unknown channel";
+            return (Error)"No round found for channel";
 
         return await StartRound(channel, threshold);
     }
@@ -145,6 +158,26 @@ public class CounterService(
             return result.Error;
 
         return (result.Value, channelId);
+    }
+
+    public async Task<Result> PauseRound(ulong channelId, bool state)
+    {
+        ChannelEntity? channel = await GetChannel(channelId);
+
+        if (channel is null)
+            return (Error)"No round active in channel";
+
+        if (channel.IsPaused == state)
+            return state ? (Error)"Round is already paused" : "Round is already unpaused";
+
+        channel.IsPaused = true;
+        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
+        dbContext.Channels.Update(channel);
+
+        if (!await dbContext.TrySaveChangesAsync())
+            return (Error)"Failed to save entity";
+
+        return true;
     }
 
     private int? GetThresholdValue(string threshold)
