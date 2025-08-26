@@ -11,7 +11,8 @@ public class StopCommandHandler(DiscordSocketClient client, DiscordBot bot, ILog
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("stop")
-        .WithDescription((Description)"Remove this channel as one to be counted in.");
+        .WithDescription((Description)"Remove this channel as one to be counted in.")
+        .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override Task HandleAsync(SocketSlashCommand command)
     {

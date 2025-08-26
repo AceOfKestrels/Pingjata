@@ -16,7 +16,8 @@ public class PauseCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("pause")
-        .WithDescription((Description)"Pause counting (no new pings recorded).");
+        .WithDescription((Description)"Pause counting (no new pings recorded).")
+        .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {

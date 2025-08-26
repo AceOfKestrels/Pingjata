@@ -16,7 +16,8 @@ public class ResetCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("reset")
-        .WithDescription((Description)"Show current threshold, count, and state.");
+        .WithDescription((Description)"Show current threshold, count, and state.")
+        .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {

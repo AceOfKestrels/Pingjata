@@ -33,7 +33,8 @@ public class StartCommandHandler(
             .WithDescription((Description)"The greeting message to send")
             .WithType(ApplicationCommandOptionType.String)
             .WithMinLength(1)
-            .WithMaxLength(500));
+            .WithMaxLength(500))
+        .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {

@@ -16,7 +16,8 @@ public class UnpauseCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("unpause")
-        .WithDescription((Description)"Resume counting.");
+        .WithDescription((Description)"Resume counting.")
+        .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {
