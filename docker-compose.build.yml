@@ -1,0 +1,6 @@
+services:
+  app:
+    image: pingjata-app
+    build:
+      context: .
+      dockerfile: Pingjata/Dockerfile

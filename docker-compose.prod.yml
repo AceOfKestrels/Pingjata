@@ -1,9 +1,6 @@
-﻿services:
+services:
   app:
-    image: pingjata-app
-    build:
-      context: .
-      dockerfile: Pingjata/Dockerfile
+    image: ghcr.io/aceofkestrels/pingjata:latest
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - DB_HOST=db
