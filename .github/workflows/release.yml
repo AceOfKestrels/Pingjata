@@ -40,7 +40,7 @@ jobs:
           echo "✅ All Dockerfiles are valid."
 
   build-images-amd64:
-    name: Build and Push Docker Images (AMD64)
+    name: Build AMD64
     needs: [ build, validate ]
     runs-on: ubuntu-latest
     steps:
@@ -80,7 +80,7 @@ jobs:
 
   #### 3. Build Images for ARM64
   build-images-arm64:
-    name: Build and Push Docker Images (ARM64)
+    name: Build ARM64
     needs: [ build, validate ]
     runs-on: ubuntu-24.04-arm
     steps:
@@ -119,7 +119,7 @@ jobs:
 
   #### 4. Create Multi-Arch Manifest Using the Release Tag (No Latest Alias)
   create-manifest:
-    name: Create and Push Multi-Arch Manifest
+    name: Create Manifest
     needs:
       - build-images-amd64
       - build-images-arm64
@@ -161,7 +161,7 @@ jobs:
 
   #### 5. Validate the Pushed Manifests (Pull Test)
   validate-images:
-    name: Validate Pushed Images (Pull Test)
+    name: Pull Test
     needs: create-manifest
     runs-on: ubuntu-latest
     steps:
@@ -192,7 +192,7 @@ jobs:
 
   #### 7. Cleanup Old Build Artifact Tags (Preserve Underlying Images for Manifest)
   cleanup-tags:
-    name: Clean Up Old Build Artifact Tags
+    name: Clean Up
     needs: validate-images
     runs-on: ubuntu-latest
     env:

@@ -3,7 +3,7 @@ using Discord.WebSocket;
 
 namespace Pingjata.Service;
 
-public class PingService(DiscordSocketClient client) : IHostedService
+public class PingService : IHostedService
 {
     private readonly Queue<SocketUser> Queue = [];
 

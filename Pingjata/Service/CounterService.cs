@@ -9,7 +9,6 @@ using Pingjata.ResultPattern;
 namespace Pingjata.Service;
 
 public class CounterService(
-    ILogger<CounterService> logger,
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     PingService pingService,
     DiscordSocketClient client)
