@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/aceofkestrels/pingjata-app:v1.0.1
+    image: ghcr.io/aceofkestrels/pingjata-app:latest
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - DB_HOST=db
