@@ -17,10 +17,7 @@ try
     IServiceCollection services = builder.Services;
 
     string connectionString = GetDbConnectionString();
-    services.AddDbContextFactory<ApplicationDbContext>(options =>
-    {
-        options.UseNpgsql(connectionString);
-    });
+    services.AddDbContextFactory<ApplicationDbContext>(options => { options.UseNpgsql(connectionString); });
 
     services.AddSingleton<CounterService>();
 
@@ -47,11 +44,7 @@ try
 
     WebApplication app = builder.Build();
 
-    using (IServiceScope scope = app.Services.CreateScope())
-    {
-        await using ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await dbContext.Database.MigrateAsync();
-    }
+    await ConnectToDatabase(app.Services);
 
     app.Run();
 }
@@ -82,4 +75,35 @@ string GetDbConnectionString()
     string connectionStr = $"Host={host}:{port};Username={user};Password={password};Database={database}";
 
     return connectionStr;
+}
+
+async Task ConnectToDatabase(IServiceProvider serviceProvider)
+{
+    using IServiceScope scope = serviceProvider.CreateScope();
+    await using ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    ILogger<Program> logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    if (!int.TryParse(Environment.GetEnvironmentVariable("DB_CONNECTION_ATTEMPTS"), out int limit))
+        limit = 10;
+
+    for (int i = 1; i <= limit; i++)
+    {
+        try
+        {
+            logger.LogInformation("Trying to connect to database...");
+            await dbContext.Database.MigrateAsync();
+            logger.LogInformation("Connected to database.");
+
+            return;
+        }
+        catch (Exception)
+        {
+            if (i == limit)
+                throw;
+
+            const int retrySeconds = 5;
+            logger.LogInformation("Failed to connect to database. Retrying in {Seconds} seconds...", retrySeconds);
+            await Task.Delay(TimeSpan.FromSeconds(retrySeconds));
+        }
+    }
 }
