@@ -99,7 +99,13 @@ public class CounterService(
     {
         ChannelEntity? entity = await GetChannel(channel.Id);
 
-        entity ??= new() { ChannelId = channel.Id.ToString() };
+        bool newRound = false;
+
+        if (entity is null)
+        {
+            newRound = true;
+            entity ??= new() { ChannelId = channel.Id.ToString() };
+        }
 
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
 
@@ -120,7 +126,10 @@ public class CounterService(
         if (entity.GreetingMessage.IsEmpty())
             entity.GreetingMessage = "Heyo, Pingjata party time!";
 
-        dbContext.Channels.Update(entity);
+        if (newRound)
+            dbContext.Channels.Add(entity);
+        else
+            dbContext.Channels.Update(entity);
 
         if (!await dbContext.TrySaveChangesAsync())
             return (Error)"Failed to save entity";
@@ -169,7 +178,7 @@ public class CounterService(
         if (channel.IsPaused == state)
             return state ? (Error)"Round is already paused" : "Round is already unpaused";
 
-        channel.IsPaused = true;
+        channel.IsPaused = state;
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
         dbContext.Channels.Update(channel);
 
