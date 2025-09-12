@@ -41,14 +41,14 @@ public abstract class SlashCommandHandler(
             {
                 if (command.Channel.IsDm(command.User))
                 {
-                    await RespondWithError(command, "Channel cannot be DM");
+                    await RespondWithError(command, Errors.CommandInDm);
 
                     return;
                 }
 
                 if (command.Channel.IsThread())
                 {
-                    await RespondWithError(command, "Channel cannot be a thread");
+                    await RespondWithError(command, Errors.CommandInThread);
 
                     return;
                 }
@@ -57,8 +57,7 @@ public abstract class SlashCommandHandler(
             }
             catch (Exception e)
             {
-                logger.LogError("Error while executing command: {Error}", e);
-                await command.RespondAsync("An error occurred while executing this command.", ephemeral: true);
+                await RespondWithError(command, Errors.CommandInternalError(e));
             }
         });
 
@@ -69,7 +68,10 @@ public abstract class SlashCommandHandler(
 
     protected virtual Task RespondWithError(SocketSlashCommand command, Error error)
     {
-        logger.LogWarning("Received invalid command: {Error}", error.LogMessage);
+        if (!error.LogMessage.IsEmpty())
+            logger.LogWarning("Received invalid command: {Error} {Exception}", error.LogMessage, error.Exception);
+        else if (!error.ResponseMessage.IsEmpty())
+            logger.LogDebug("Received invalid command: {Error} {Exception}", error.ResponseMessage, error.Exception);
 
         return command.RespondAsync(error.ResponseMessage, ephemeral: true);
     }

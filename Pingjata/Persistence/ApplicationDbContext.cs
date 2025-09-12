@@ -40,7 +40,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         }
         catch (Exception e)
         {
-            return (Error)e.ToString();
+            return Errors.DatabaseError(e);
         }
     }
 }

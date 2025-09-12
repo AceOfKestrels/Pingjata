@@ -29,13 +29,15 @@ public class DmHandler(DiscordSocketClient client, ILogger<DmHandler> logger, Co
             await counterService.RestartRoundForUser(message.Author.Id, threshold);
 
         if (result.IsError)
+        {
+            logger.LogError("{Error} {Exception}", result.Error.LogMessage, result.Error.Exception);
             return;
+        }
 
         SocketGuildChannel? guildChannel = await Client.GetChannelAsync(result.Value.channelId) as SocketGuildChannel;
 
         string channelMention = guildChannel is null ? string.Empty : $"{guildChannel.GetChanelLink()}\n";
 
-        await message.Channel.SendMessageAsync(
-            $"{channelMention}Started new round with threshold: {result.Value.threshold}");
+        await message.Channel.SendMessageAsync(channelMention + Responses.StartSuccess(result.Value.threshold));
     }
 }

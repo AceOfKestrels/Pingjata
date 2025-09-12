@@ -42,7 +42,7 @@ public class StartCommandHandler(
 
         if (threshold is null)
         {
-            await RespondWithError(command, "Missing threshold argument");
+            await RespondWithError(command, Errors.MissingThresholdArg);
 
             return;
         }

@@ -40,6 +40,8 @@ public static class Responses
     public const string UnpauseSuccess = "Successfully unpaused round";
     public const string StopSuccess = "Successfully stopped";
     public const string StatusNoActiveRound = "Status: No active round";
+    public const string DefaultGreeting = "Heyo, Pingjata party time!";
+    public const string RequestNewThreshold = "New threshold please";
 
     public static string StatusName(bool paused) => paused ? "Paused" : "Active";
 
@@ -67,4 +69,11 @@ public static class Responses
                               Winner: {winner}
                               Round ended {endedAt.ToRelativeTimestamp()}
                               """;
+
+    public static string WinnerAnnouncement(string winner, int threshold) => $"""
+                                                                              @here
+                                                                              Round has ended!
+                                                                              The winner is {winner}
+                                                                              Total pings: {threshold}
+                                                                              """;
 }
