@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Pingjata.Bot.EventHandlers.Base;
 using Pingjata.Extensions;
 using Pingjata.Persistence.Models;
+using Pingjata.ResultPattern;
 using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
@@ -16,31 +17,7 @@ public class StatusCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("status")
-        .WithDescription((Description)"Show current threshold, count, and state.");
-
-    private const string FailTemplate = "Status: No active round";
-
-    private const string DefaultUserTemplate = "Status: {0}";
-
-    private const string FinishedUserTemplate = """
-                                                Status: Finished
-                                                Winner: {0}
-                                                Round ended {1}
-                                                """;
-
-    private const string DefaultAdminTemplate = """
-                                                Status: {0}
-                                                Counter: {1} / {2}
-                                                Greeting: {3}
-                                                """;
-
-    private const string FinishedAdminTemplate = """
-                                                 Status: Finished
-                                                 Counter: {0} / {1}
-                                                 Greeting: {2}
-                                                 Winner: {3}
-                                                 Round ended {4}
-                                                 """;
+        .WithDescription((Description)Responses.StatusCommandDesc);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {
@@ -54,7 +31,7 @@ public class StatusCommandHandler(
     private async Task<string> GetResponseMessage(ChannelEntity? channel, ChannelPermissions permissions)
     {
         if (channel is null)
-            return FailTemplate;
+            return Responses.StatusNoActiveRound;
 
         string status = channel.IsPaused ? "Paused" : "Active";
 
@@ -65,16 +42,16 @@ public class StatusCommandHandler(
         if (permissions is { ManageChannel: false, ManageMessages: false })
         {
             if (channel.WinnerId is null || channel.RoundEndedAt is null || userName is null)
-                return string.Format(DefaultUserTemplate, status);
+                return Responses.StatusUserActive(channel.IsPaused);
 
-            return string.Format(FinishedUserTemplate, userName, channel.RoundEndedAt.Value.ToRelativeTimestamp());
+            return Responses.StatusUserFinished(userName, channel.RoundEndedAt.Value);
         }
 
         if (channel.WinnerId is null || channel.RoundEndedAt is null || userName is null)
-            return string.Format(DefaultAdminTemplate, status, channel.CurrentCounter, channel.Threshold,
+            return Responses.StatusAdminActive(channel.IsPaused, channel.CurrentCounter, channel.Threshold,
                 channel.GreetingMessage);
 
-        return string.Format(FinishedAdminTemplate, channel.Threshold, channel.Threshold, channel.GreetingMessage,
-            userName, channel.RoundEndedAt.Value.ToRelativeTimestamp());
+        return Responses.StatusAdminFinished(channel.Threshold, channel.Threshold, channel.GreetingMessage,
+            userName, channel.RoundEndedAt.Value);
     }
 }

@@ -2,6 +2,7 @@ using Discord;
 using Discord.WebSocket;
 using Pingjata.Bot.EventHandlers.Base;
 using Pingjata.Extensions;
+using Pingjata.ResultPattern;
 using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
@@ -15,7 +16,7 @@ public class StopCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("stop")
-        .WithDescription((Description)"Remove this channel as one to be counted in.")
+        .WithDescription((Description)Responses.StopCommandDesc)
         .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages |
                                       GuildPermission.ManageChannels);
 
@@ -30,6 +31,6 @@ public class StopCommandHandler(
             return;
         }
 
-        await command.RespondAsync("Successfully stopped");
+        await command.RespondAsync(Responses.StopSuccess);
     }
 }

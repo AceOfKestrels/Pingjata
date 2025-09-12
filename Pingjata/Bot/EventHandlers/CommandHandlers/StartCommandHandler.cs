@@ -19,18 +19,17 @@ public class StartCommandHandler(
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("start")
         .WithDescription(
-            (Description)
-            "Set this channel as one to be counted in, and set the threshold and optionally a greeting message. Will end current round without a winner if used during a round.")
+            (Description)Responses.StartCommandDesc)
         .AddOption(new SlashCommandOptionBuilder()
             .WithName(ThresholdOption)
-            .WithDescription((Description)"The threshold value or min-max")
+            .WithDescription((Description)Responses.StartCommandThresholdDesc)
             .WithType(ApplicationCommandOptionType.String)
             .WithRequired(true)
             .WithMinLength(1)
             .WithMaxLength(100))
         .AddOption(new SlashCommandOptionBuilder()
             .WithName(MessageOption)
-            .WithDescription((Description)"The greeting message to send")
+            .WithDescription((Description)Responses.StartCommandMessageDesc)
             .WithType(ApplicationCommandOptionType.String)
             .WithMinLength(1)
             .WithMaxLength(500))
@@ -57,6 +56,6 @@ public class StartCommandHandler(
             return;
         }
 
-        await command.RespondAsync($"Started new round with threshold: {result.Value}", ephemeral: true);
+        await command.RespondAsync(Responses.StartSuccess(result.Value), ephemeral: true);
     }
 }

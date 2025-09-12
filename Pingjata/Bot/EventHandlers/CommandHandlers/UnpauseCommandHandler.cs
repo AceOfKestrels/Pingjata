@@ -16,7 +16,7 @@ public class UnpauseCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("unpause")
-        .WithDescription((Description)"Resume counting.")
+        .WithDescription((Description)Responses.UnpauseCommandDesc)
         .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
@@ -28,6 +28,6 @@ public class UnpauseCommandHandler(
             await RespondWithError(command, result.Error);
         }
 
-        await command.RespondAsync("Successfully unpaused round", ephemeral: true);
+        await command.RespondAsync(Responses.UnpauseSuccess, ephemeral: true);
     }
 }

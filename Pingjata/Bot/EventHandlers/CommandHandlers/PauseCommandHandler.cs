@@ -16,7 +16,7 @@ public class PauseCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("pause")
-        .WithDescription((Description)"Pause counting (no new pings recorded).")
+        .WithDescription((Description)Responses.PauseCommandDesc)
         .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
@@ -28,6 +28,6 @@ public class PauseCommandHandler(
             await RespondWithError(command, result.Error);
         }
 
-        await command.RespondAsync("Successfully paused round", ephemeral: true);
+        await command.RespondAsync(Responses.PauseSuccess, ephemeral: true);
     }
 }

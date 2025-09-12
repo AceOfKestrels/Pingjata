@@ -16,7 +16,7 @@ public class ResetCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("reset")
-        .WithDescription((Description)"Show current threshold, count, and state.")
+        .WithDescription((Description)Responses.ResetCommandDesc)
         .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
@@ -30,6 +30,6 @@ public class ResetCommandHandler(
             return;
         }
 
-        await command.RespondAsync($"Started new round with threshold: {result.Value}", ephemeral: true);
+        await command.RespondAsync(Responses.StartSuccess(result.Value), ephemeral: true);
     }
 }
