@@ -8,6 +8,7 @@ services:
       - DB_USER=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_DATABASE=${POSTGRES_DB}
+      - ASPNETCORE_ENVIRONMENT=Production
     restart: unless-stopped
     networks:
       app:

@@ -2,6 +2,7 @@ using Discord;
 using Discord.WebSocket;
 using Pingjata.Bot.EventHandlers.Base;
 using Pingjata.Extensions;
+using Pingjata.ResultPattern;
 using Pingjata.Service;
 
 namespace Pingjata.Bot.EventHandlers.CommandHandlers;
@@ -15,35 +16,21 @@ public class StopCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("stop")
-        .WithDescription((Description)"Remove this channel as one to be counted in.")
+        .WithDescription((Description)Responses.StopCommandDesc)
         .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages |
                                       GuildPermission.ManageChannels);
 
-    protected async override Task HandleAsync(SocketSlashCommand command)
+    protected override async Task HandleAsync(SocketSlashCommand command)
     {
-        if (command.Channel.IsDm(command.User))
-        {
-            await RespondWithError(command, "Channel cannot be DM");
-
-            return;
-        }
-
-        if (command.Channel.IsThread())
-        {
-            await RespondWithError(command, "Channel cannot be a thread");
-
-            return;
-        }
-
         var result = await counterService.StopRound(command.Channel.Id);
 
         if (result.IsError)
         {
-            await RespondWithError(command, result.Error.LogMessage);
+            await RespondWithError(command, result.Error);
 
             return;
         }
 
-        await command.RespondAsync("Successfully stopped");
+        await command.RespondAsync(Responses.StopSuccess);
     }
 }

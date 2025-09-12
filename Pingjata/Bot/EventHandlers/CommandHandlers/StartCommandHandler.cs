@@ -19,18 +19,17 @@ public class StartCommandHandler(
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("start")
         .WithDescription(
-            (Description)
-            "Set this channel as one to be counted in, and set the threshold and optionally a greeting message. Will end current round without a winner if used during a round.")
+            (Description)Responses.StartCommandDesc)
         .AddOption(new SlashCommandOptionBuilder()
             .WithName(ThresholdOption)
-            .WithDescription((Description)"The threshold value or min-max")
+            .WithDescription((Description)Responses.StartCommandThresholdDesc)
             .WithType(ApplicationCommandOptionType.String)
             .WithRequired(true)
             .WithMinLength(1)
             .WithMaxLength(100))
         .AddOption(new SlashCommandOptionBuilder()
             .WithName(MessageOption)
-            .WithDescription((Description)"The greeting message to send")
+            .WithDescription((Description)Responses.StartCommandMessageDesc)
             .WithType(ApplicationCommandOptionType.String)
             .WithMinLength(1)
             .WithMaxLength(500))
@@ -38,26 +37,12 @@ public class StartCommandHandler(
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {
-        if (command.Channel.IsDm(command.User))
-        {
-            await RespondWithError(command, "Channel cannot be DM");
-
-            return;
-        }
-
-        if (command.Channel.IsThread())
-        {
-            await RespondWithError(command, "Channel cannot be a thread");
-
-            return;
-        }
-
         string? threshold = command.Data.GetString(ThresholdOption);
         string? message = command.Data.GetString(MessageOption);
 
         if (threshold is null)
         {
-            await RespondWithError(command, "Missing threshold argument");
+            await RespondWithError(command, Errors.MissingThresholdArg);
 
             return;
         }
@@ -66,11 +51,11 @@ public class StartCommandHandler(
 
         if (result.IsError)
         {
-            await RespondWithError(command, "Could not parse threshold or range");
+            await RespondWithError(command, result.Error);
 
             return;
         }
 
-        await command.RespondAsync($"Started new round with threshold: {result.Value}", ephemeral: true);
+        await command.RespondAsync(Responses.StartSuccess(result.Value), ephemeral: true);
     }
 }

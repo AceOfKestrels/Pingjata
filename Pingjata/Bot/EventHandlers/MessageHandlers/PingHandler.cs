@@ -26,7 +26,7 @@ public class PingHandler(DiscordSocketClient client, ILogger<PingHandler> logger
             return;
 
         Result result = await counterService.IncreaseCounter(message.Channel, message.Author.Id);
-        if(result.IsError)
-            logger.LogError("Error while counting: {Error}", result.Error.LogMessage);
+        if (result.IsError)
+            logger.LogError("{Error} {Exception}", result.Error.LogMessage, result.Error.Exception);
     }
 }

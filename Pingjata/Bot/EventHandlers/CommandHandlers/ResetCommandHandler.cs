@@ -16,34 +16,20 @@ public class ResetCommandHandler(
 {
     protected override SlashCommandBuilder Command { get; } = new SlashCommandBuilder()
         .WithName("reset")
-        .WithDescription((Description)"Show current threshold, count, and state.")
+        .WithDescription((Description)Responses.ResetCommandDesc)
         .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages | GuildPermission.ManageChannels);
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {
-        if (command.Channel.IsDm(command.User))
-        {
-            await RespondWithError(command, "Channel cannot be DM");
-
-            return;
-        }
-
-        if (command.Channel.IsThread())
-        {
-            await RespondWithError(command, "Channel cannot be a thread");
-
-            return;
-        }
-
         Result<int> result = await counterService.RestartRoundForChannel(command.Channel.Id);
 
         if (result.IsError)
         {
-            await RespondWithError(command, "No round in channel. Use /start instead");
+            await RespondWithError(command, result.Error);
 
             return;
         }
 
-        await command.RespondAsync($"Started new round with threshold: {result.Value}", ephemeral: true);
+        await command.RespondAsync(Responses.StartSuccess(result.Value), ephemeral: true);
     }
 }
