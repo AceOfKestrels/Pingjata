@@ -188,6 +188,20 @@ public class CounterService(
         return true;
     }
 
+    public async Task<Result> StopRound(ulong channelId)
+    {
+        ChannelEntity? channel = await GetChannel(channelId);
+
+        if (channel is null)
+            return (Error)"No active round in channel";
+
+        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync();
+        dbContext.Channels.Remove(channel);
+        await dbContext.TrySaveChangesAsync();
+
+        return true;
+    }
+
     private int? GetThresholdValue(string threshold)
     {
         if (int.TryParse(threshold, out int value))
