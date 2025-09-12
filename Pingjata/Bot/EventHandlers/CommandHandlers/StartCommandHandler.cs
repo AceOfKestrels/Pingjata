@@ -38,20 +38,6 @@ public class StartCommandHandler(
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {
-        if (command.Channel.IsDm(command.User))
-        {
-            await RespondWithError(command, "Channel cannot be DM");
-
-            return;
-        }
-
-        if (command.Channel.IsThread())
-        {
-            await RespondWithError(command, "Channel cannot be a thread");
-
-            return;
-        }
-
         string? threshold = command.Data.GetString(ThresholdOption);
         string? message = command.Data.GetString(MessageOption);
 
@@ -66,7 +52,7 @@ public class StartCommandHandler(
 
         if (result.IsError)
         {
-            await RespondWithError(command, "Could not parse threshold or range");
+            await RespondWithError(command, result.Error);
 
             return;
         }

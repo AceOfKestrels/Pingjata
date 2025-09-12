@@ -21,25 +21,11 @@ public class ResetCommandHandler(
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {
-        if (command.Channel.IsDm(command.User))
-        {
-            await RespondWithError(command, "Channel cannot be DM");
-
-            return;
-        }
-
-        if (command.Channel.IsThread())
-        {
-            await RespondWithError(command, "Channel cannot be a thread");
-
-            return;
-        }
-
         Result<int> result = await counterService.RestartRoundForChannel(command.Channel.Id);
 
         if (result.IsError)
         {
-            await RespondWithError(command, "No round in channel. Use /start instead");
+            await RespondWithError(command, result.Error);
 
             return;
         }

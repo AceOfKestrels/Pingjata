@@ -19,27 +19,13 @@ public class StopCommandHandler(
         .WithDefaultMemberPermissions(GuildPermission.Administrator | GuildPermission.ManageMessages |
                                       GuildPermission.ManageChannels);
 
-    protected async override Task HandleAsync(SocketSlashCommand command)
+    protected override async Task HandleAsync(SocketSlashCommand command)
     {
-        if (command.Channel.IsDm(command.User))
-        {
-            await RespondWithError(command, "Channel cannot be DM");
-
-            return;
-        }
-
-        if (command.Channel.IsThread())
-        {
-            await RespondWithError(command, "Channel cannot be a thread");
-
-            return;
-        }
-
         var result = await counterService.StopRound(command.Channel.Id);
 
         if (result.IsError)
         {
-            await RespondWithError(command, result.Error.LogMessage);
+            await RespondWithError(command, result.Error);
 
             return;
         }

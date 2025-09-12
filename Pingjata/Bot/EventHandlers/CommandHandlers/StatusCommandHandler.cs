@@ -44,20 +44,6 @@ public class StatusCommandHandler(
 
     protected override async Task HandleAsync(SocketSlashCommand command)
     {
-        if (command.GuildId is null)
-        {
-            await RespondWithError(command, "Channel cannot be DM");
-
-            return;
-        }
-
-        if (command.Channel.IsThread())
-        {
-            await RespondWithError(command, "Channel cannot be a thread");
-
-            return;
-        }
-
         ChannelEntity? channel = await counterService.GetChannel(command.Channel.Id);
 
         string response = await GetResponseMessage(channel, command.User.GetPermissions(command.Channel));
