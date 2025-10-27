@@ -1,23 +1,11 @@
-name: "Build"
+name: "Dotnet CI"
 
 on:
-  push:
+    push:
+    workflow_dispatch: 
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup dotnet
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.x'
-
-      - name: Install dependencies
-        run: dotnet restore *.sln
-
-      - name: Build application
-        run: dotnet build *.sln
+    ci:
+        uses: KestrelsDevelopment/.github/.github/workflows/dotnet.yml@main 
+        with: 
+            dotnet-version: "8.x"
